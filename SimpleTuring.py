@@ -82,10 +82,12 @@ def print_machine(name):
     User needs to add it to the machines dictionary after that, to be able to call it
     :param name: the name of the dictionary
     """
+    print("### COPY THIS IN THE BLOCK LINE 27 ###")
     print(name + " = {")
     for key in machine.keys():
         print("\t{}: {},".format(key, machine.get(key)))
     print("}")
+    print("######################################")
 
 
 def init_band(integers, band):
@@ -241,11 +243,11 @@ else:
 
 if args.start_index != 0:
     current_index = args.startindex
+if args.print:
+    print_machine(args.print)
 
 print("--------------------------------------")
-print("Welcome to Mat's Turing Machine !")
-print("Note : R is for Right, L is fort left,\nB is for blank. Anything else is up to you.")
-print("I did almost no " + bcolors.FAIL + "error" + bcolors.ENDC + " management, sorry.")
+print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAnything else is up to you.")
 print("Text in " + bcolors.OKGREEN + "green" + bcolors.ENDC + " is the current index.")
 print("--------------------------------------")
 print("Starting with : ")
