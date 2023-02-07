@@ -12,6 +12,9 @@ $ python3 SimpleTuring.py -h
 ### Usage
 #### Arguments
 ```
+usage: SimpleTuring.py [-h] [-b BAND] [-i INT [INT ...]] [-s START_INDEX] [-p PRINT] [-ph] [-m MACHINE] [-d DICTIONARY [DICTIONARY ...]] [-t TRANSITIONS [TRANSITIONS ...]]
+
+options:
   -h, --help            show this help message and exit
   -b BAND, --band BAND  Starting band for the program
   -i INT [INT ...], --int INT [INT ...]
@@ -20,12 +23,14 @@ $ python3 SimpleTuring.py -h
                         Starting index of the machine
   -p PRINT, --print PRINT
                         Print a python version of the machine, to add it in the code, line 27 and below
+  -ph, --print-human    Print the current machine as a human readable format
   -m MACHINE, --machine MACHINE
                         Use a custom machine previously added to the source code above, line 27 and below
   -d DICTIONARY [DICTIONARY ...], --dictionary DICTIONARY [DICTIONARY ...]
                         Define the dictionary (format : A B C | D )
   -t TRANSITIONS [TRANSITIONS ...], --transitions TRANSITIONS [TRANSITIONS ...]
                         Transitions (format : '<start state> <read> <action> <end state>' Example : "0 B | 1" "0 | | 0"
+
 ```
 
 #### Example
@@ -38,10 +43,9 @@ cleaner = {
 }
 ######################################
 --------------------------------------
-Welcome to Mat's Turing Machine !
-Note : R is for Right, L is fort left,
-B is for blank. Anything else is up to you.
-I did almost no error management, sorry.
+Note : R is for Right, L is for left,
+B is for blank. | is for unary
+Anything else is up to you.
 Text in green is the current index.
 --------------------------------------
 Starting with : 
