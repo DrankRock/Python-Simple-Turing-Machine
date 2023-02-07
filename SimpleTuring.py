@@ -31,11 +31,6 @@ cleaner = {
     1: [['B', 'R', 0]]
 }
 
-# Don't forget to add it below !
-machines = {
-    "cleaner": cleaner,
-}
-
 startAndEnd = {
     0: [['|', 'L', 1]],
     1: [['B', 'S', 1], ['S', 'R', 2]],
@@ -45,7 +40,28 @@ startAndEnd = {
     5: [['B', 'L', 5], ['|', 'L', 5], ['S', 'S', 6]],
 }
 
+maximum = {
+    0: [['|', 'L', 1]],
+    1: [['B', 'S', 1], ['S', 'R', 2]],
+    2: [['|', 'R', 2], ['B', 'R', 3]],
+    3: [['|', 'R', 2], ['B', 'E', 4]],
+    4: [['E', 'L', 5]],
+    5: [['B', 'L', 5], ['|', 'L', 51], ['O', 'L', 5], ['S', 'R', 56]],
+    51: [['|', 'L', 51], ['O', 'L', 52], ['B', 'L', 52], ['S', 'S', 57]],
+    52: [['B', 'L', 52], ['O', 'L', 52], ['|', 'L', 53], ['S', 'S', 57]],
+    53: [['|', 'L', 53], ['O', 'L', 53], ['B', 'L', 53], ['S', 'R', 6]],
+    6: [['O', 'R', 6], ['|', 'O', 7], ['B', 'R', 6], ['E', 'E', 4]],
+    7: [['O', 'R', 7], ['|', 'R', 7], ['B', 'R', 6]],
+    57: [['S', 'R', 57], ['B', 'R', 57], ['O', 'R', 57], ['E', 'E', 57], ['|', 'L', 58]],
+    58: [['O', '|', 58], ['|', 'L', 58], ['B', 'B', 58], ['B', 'R', 59]],
+    59: [['|', 'B', 59], ['B', 'B', 59]],
+}
 
+# Don't forget to add it below !
+machines = {
+    "cleaner": cleaner,
+    "maximum": maximum
+}
 
 # ## END OF CUSTOM MACHINES  ## #
 #################################
@@ -83,6 +99,17 @@ def make_machine(transitions):
         machine = my_dict
     except Exception as ex:
         error("Exception caught during machine creation :\n{}".format(ex))
+
+
+def print_human():
+    """
+    Print the current machine as a human readable format, then exits
+    """
+    sorted_dict = dict(sorted(machine.items()))
+    for key in sorted_dict.keys():
+        for elem in sorted_dict.get(key):
+            print("{}  {}  {}  {}".format(key, elem[0], elem[1], elem[2]))
+        # print("\t{}: {},".format(key, machine.get(key)))
 
 
 def print_machine(name):
@@ -146,7 +173,7 @@ def print_state(action):
                                                                        action))
 
 
-def print_band():
+def print_band(etat = None):
     """
     Print the current band, with green current index
     """
@@ -156,6 +183,8 @@ def print_band():
             my_str += bcolors.OKGREEN + current_band[i] + bcolors.ENDC  # don't forget ENDC !
         else:
             my_str += current_band[i]
+    if etat is not None:
+        my_str += " -- "+str(etat)
     print(my_str)
 
 
@@ -212,7 +241,7 @@ def next_state():
     current_state = machine_step[2]  # update current state
     global iterator
     iterator += 1
-    print_band()
+    print_band(current_state)
 
 
 # Parse arguments
@@ -224,6 +253,7 @@ parser.add_argument('-i', '--int', help="integers to add to the band", type=int,
 parser.add_argument('-s', '--start-index', help="Starting index of the machine", type=int, default=0)
 parser.add_argument('-p', '--print', help="Print a python version of the machine, to add it in the code, "
                                           "line 27 and below", type=str)
+parser.add_argument('-ph', '--print-human', help="Print the current machine as a human readable format", action='store_true')
 parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
                                             " line 27 and below", type=str)
 
@@ -254,6 +284,9 @@ if args.start_index != 0:
     current_index = args.startindex
 if args.print:
     print_machine(args.print)
+if args.print_human:
+    print_human()
+    sys.exit(1)
 
 print("--------------------------------------")
 print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAnything else is up to you.")
