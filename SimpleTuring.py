@@ -36,6 +36,16 @@ machines = {
     "cleaner": cleaner,
 }
 
+startAndEnd = {
+    0: [['|', 'L', 1]],
+    1: [['B', 'S', 1], ['S', 'R', 2]],
+    2: [['|', 'R', 2], ['B', 'R', 3]],
+    3: [['|', 'R', 2], ['B', 'E', 4]],
+    4: [['E', 'L', 5]],
+    5: [['B', 'L', 5], ['|', 'L', 5], ['S', 'S', 6]],
+}
+
+
 
 # ## END OF CUSTOM MACHINES  ## #
 #################################
@@ -182,10 +192,9 @@ def next_state():
     possibilities = machine.get(current_state)  # possible transitions
     machine_step = []
     try:
-        if possibilities[0][0] == current_char:
-            machine_step = possibilities[0]
-        elif possibilities[1][0] == current_char:
-            machine_step = possibilities[1]
+        for i in range(0, len(possibilities)):
+            if possibilities[i][0] == current_char:
+                machine_step = possibilities[i]
     except Exception as exp:
         # no possible transition was found -> End
         ending(1)
