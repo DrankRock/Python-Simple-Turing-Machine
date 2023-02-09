@@ -79,6 +79,7 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    OKRED = '\33[91m'
 
 
 def make_machine(transitions):
@@ -197,6 +198,8 @@ def ending(i=0):
     print("Reached in {} steps".format(iterator))
     if i != 0:
         print("Note : Ended because of unknown transition")
+    else :
+        print(bcolors.OKRED + "Note : Ended because of infinite state" + bcolors.ENDC)
     sys.exit(1)
 
 
