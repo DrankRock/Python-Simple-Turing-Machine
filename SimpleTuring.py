@@ -8,14 +8,13 @@ from printers import *
 
 '''
 TODO : 
-    - n-uplets
+    - gdb mode with s, j <n steps>, c, b <state>, p 
+    - n-bands
     - save machines to .machine file with -a
         (saved machine can be of format :)
         --> load 
         --> append multiple machines
         --> load machines from custom file
-    - fix the impossibility to specify | in a dictionnary because it has a meaning in bash
-    - put -c, --color B red Y yellow to print characters with special colors
 
 '''
 current_band = ""
@@ -26,12 +25,17 @@ end_symbols = []
 display_inline = False
 display_sleep = 0
 special_color_char = {}
+nuplets = 4
 
 #################################
 # ADD YOUR CUSTOM MACHINES HERE #
 cleaner = {
     0: [['|', 'B', 1]],
     1: [['B', 'R', 0]]
+}
+
+cleaner5 = {
+    0: [['|', 'R', 'B', 0]]
 }
 
 startAndEnd = {
@@ -63,6 +67,7 @@ maximum = {
 # Don't forget to add it below !
 machines = {
     "cleaner": cleaner,
+    "cleaner5": cleaner5,
     "maximum": maximum
 }
 
@@ -85,9 +90,11 @@ def make_machine(transitions):
             current = elem.split(' ')
             state = int(current[0])
             if not my_dict.get(state):
-                my_dict[
-                    state] = []  # dictionary of the form : <start state>: [ [<read>, <action>, <end state>], [...]]
-            my_dict.get(state).append([current[1], current[2], int(current[3])])
+                my_dict[state] = []  # dictionary of the form : <start state>: [ [<read>, <action>, <end state>], [...]]
+            elem_list = []
+            for i in range(1, nuplets):
+                elem_list.append(current[i])
+            my_dict.get(state).append(elem_list)
         global machine
         machine = my_dict
     except Exception as ex:
@@ -136,12 +143,15 @@ def ending(i=0):
     Print the ending infos and exits
     :param i: set to 1 if it was called in the transition exception screen
     """
+    if display_inline:
+        print("")
     print("-----------------\nEnd Reached")
     for elem in end_symbols:
         try:
-            print("Number of " + elem + " : " + current_band.count(elem))
+            print("Number of " + elem + " : " + str(current_band.count(elem)))
         except Exception as e:
             print("Number of " + elem + " : 0")
+            print(e)
     print("Reached in {} steps".format(iterator))
     if i != 0:
         print("Note : Ended because of unknown transition")
@@ -157,6 +167,7 @@ def next_state():
     global current_index
     global current_state
     global current_band
+    global iterator
 
     current_char = current_band[current_index]  # character pointed by index
     possibilities = machine.get(current_state)  # possible transitions
@@ -168,25 +179,29 @@ def next_state():
     except Exception as exp:
         # no possible transition was found -> End
         ending(1)
+    if not machine_step:
+        ending(1)
 
-    if machine_step[1] == 'R':  # move right
-        current_index += 1
-        if current_index == len(current_band) - 1:
-            current_band += "B"
-    elif machine_step[1] == 'L':  # move left
-        current_index -= 1
-        if current_index == 0:
-            current_band = "B" + current_band
-    else:  # replace by character instead of moving
-        if current_state == machine_step[2] and machine_step[0] == machine_step[1]:
-            ending()
-        band = list(current_band)
-        band[current_index] = machine_step[1]
-        current_band = "".join(band)  # modify the band
-    current_state = machine_step[2]  # update current state
-    global iterator
-    iterator += 1
-    print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
+    all_steps = machine_step[1:(nuplets-2)]
+    all_steps.reverse()
+    for step in all_steps :
+        if step == 'R':  # move right
+            current_index += 1
+            if current_index == len(current_band) - 1:
+                current_band += "B"
+        elif step == 'L':  # move left
+            current_index -= 1
+            if current_index == 0:
+                current_band = "B" + current_band
+        else:  # replace by character instead of moving
+            if current_state == machine_step[2] and machine_step[0] == machine_step[1]:
+                ending()
+            band = list(current_band)
+            band[current_index] = step
+            current_band = "".join(band)  # modify the band
+        iterator += 1
+        print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
+    current_state = machine_step[nuplets-2]  # update current state
 
 
 # Parse arguments
@@ -211,12 +226,12 @@ parser.add_argument('-di', '--display-inline', help="Display the current line in
 parser.add_argument('-ds', '--display-sleep', help="sleep n milliseconds between each step", default=0, type=int)
 parser.add_argument('-t', '--transitions', help="Transitions (format : '<start state> <read> <action> <end state>'\n"
                                                 "Example : \"0 B | 1\" \"0 | | 0\"", type=str, nargs='+')
-
-# Not Working
-parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
-parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 parser.add_argument('-c', '--colors', help="Specify a color for a character ( -c B red ). l to list colors",
                     type=str, nargs='+')
+parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
+
+# Not Working
+parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 
 args = parser.parse_args()
 
@@ -234,6 +249,11 @@ if args.colors:
                 available_colors()
                 sys.exit(1)
         printers.special_char = special_color_char
+
+if int(args.n_uplet) < 4:
+    error("Error: N-Uplet can't be below 4")
+else :
+    nuplets = args.n_uplet
 
 # Initialize
 if not args.machine and not args.transitions:
