@@ -1,28 +1,14 @@
 import sys
 import argparse
-
-''' Content of the help :
-usage: main.py [-h] [-b BAND] [-i INT [INT ...]] [-s START_INDEX] [-d DICTIONARY [DICTIONARY ...]] -t TRANSITIONS [TRANSITIONS ...]
-
-options:
-  -h, --help            show this help message and exit
-  -b BAND, --band BAND  Starting band for the program
-  -i INT [INT ...], --int INT [INT ...]
-                        integers to add to the band
-  -s START_INDEX, --start-index START_INDEX
-                        Starting index of the machine
-  -d DICTIONARY [DICTIONARY ...], --dictionary DICTIONARY [DICTIONARY ...]
-                        Define the dictionary (format : A B C | D )
-  -t TRANSITIONS [TRANSITIONS ...], --transitions TRANSITIONS [TRANSITIONS ...]
-                        Transitions (format : '<start state> <read> <action> <end state>' Example : "0 B | 1" "0 | | 0"
-Usage Example : 
-python SimpleTuring.py -t "0 | B 1" "0 B B 0" "1 B R 0" -i 2 3
-'''
+import time
 
 current_band = ""
 current_index = 0
 current_state = 0
 iterator = 0
+end_symbols = []
+display_inline = False
+display_sleep = 0
 
 #################################
 # ADD YOUR CUSTOM MACHINES HERE #
@@ -186,7 +172,11 @@ def print_band(etat = None):
             my_str += current_band[i]
     if etat is not None:
         my_str += " -- "+str(etat)
-    print(my_str)
+    if display_inline:
+        print("\r{}   ".format(my_str), end="", flush=True)
+    else:
+        print(my_str)
+    time.sleep(display_sleep)
 
 
 def ending(i=0):
@@ -194,7 +184,12 @@ def ending(i=0):
     Print the ending infos and exits
     :param i: set to 1 if it was called in the transition exception screen
     """
-    print("-----------------\nEnd Reached\nReturn value : ", current_band.count('|'))
+    print("-----------------\nEnd Reached")
+    for elem in end_symbols :
+        try :
+            print("Number of "+elem+" : "+current_band.count(elem))
+        except Exception as e:
+            print("Number of " + elem + " : 0")
     print("Reached in {} steps".format(iterator))
     if i != 0:
         print("Note : Ended because of unknown transition")
@@ -233,8 +228,12 @@ def next_state():
 
     if machine_step[1] == 'R':  # move right
         current_index += 1
+        if current_index == len(current_band) - 1:
+            current_band += "B"
     elif machine_step[1] == 'L':  # move left
         current_index -= 1
+        if current_index == 0:
+            current_band = "B"+current_band
     else:  # replace by character instead of moving
         if current_state == machine_step[2] and machine_step[0] == machine_step[1]:
             ending()
@@ -259,8 +258,14 @@ parser.add_argument('-p', '--print', help="Print a python version of the machine
 parser.add_argument('-ph', '--print-human', help="Print the current machine as a human readable format", action='store_true')
 parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
                                             " line 27 and below", type=str)
+parser.add_argument('-es', '--end-symbols', help="Specify the symbols to count after ending. Format : -es Y S",nargs='+',
+                    type=str, default="|")
+parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
+parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 
 parser.add_argument('-d', '--dictionary', help="Define the dictionary (format : A B C | D )", nargs='+')
+parser.add_argument('-di', '--display-inline', help="Display the current line inline", action='store_true')
+parser.add_argument('-ds', '--display-sleep', help="sleep n milliseconds between each step", default=0, type=int)
 parser.add_argument('-t', '--transitions', help="Transitions (format : '<start state> <read> <action> <end state>'\n"
                                                 "Example : \"0 B | 1\" \"0 | | 0\"", type=str, nargs='+')
 args = parser.parse_args()
@@ -290,6 +295,9 @@ if args.print:
 if args.print_human:
     print_human()
     sys.exit(1)
+end_symbols += args.end_symbols
+display_inline = args.display_inline
+display_sleep = args.display_sleep/1000
 
 print("--------------------------------------")
 print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAnything else is up to you.")
