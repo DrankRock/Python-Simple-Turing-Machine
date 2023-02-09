@@ -2,6 +2,22 @@ import sys
 import argparse
 import time
 
+import printers
+from colors import *
+from printers import *
+
+'''
+TODO : 
+    - n-uplets
+    - save machines to .machine file with -a
+        (saved machine can be of format :)
+        --> load 
+        --> append multiple machines
+        --> load machines from custom file
+    - fix the impossibility to specify | in a dictionnary because it has a meaning in bash
+    - put -c, --color B red Y yellow to print characters with special colors
+
+'''
 current_band = ""
 current_index = 0
 current_state = 0
@@ -9,6 +25,7 @@ iterator = 0
 end_symbols = []
 display_inline = False
 display_sleep = 0
+special_color_char = {}
 
 #################################
 # ADD YOUR CUSTOM MACHINES HERE #
@@ -49,23 +66,12 @@ machines = {
     "maximum": maximum
 }
 
+
 # ## END OF CUSTOM MACHINES  ## #
 #################################
 
-class bcolors:
-    """
-    bcolor.COLOR to change the printed color
-    """
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    OKRED = '\33[91m'
+def grouped(iterable, n):  # https://stackoverflow.com/a/5389547
+    return zip(*[iter(iterable)] * n)
 
 
 def make_machine(transitions):
@@ -86,32 +92,6 @@ def make_machine(transitions):
         machine = my_dict
     except Exception as ex:
         error("Exception caught during machine creation :\n{}".format(ex))
-
-
-def print_human():
-    """
-    Print the current machine as a human readable format, then exits
-    """
-    sorted_dict = dict(sorted(machine.items()))
-    for key in sorted_dict.keys():
-        for elem in sorted_dict.get(key):
-            print("{}  {}  {}  {}".format(key, elem[0], elem[1], elem[2]))
-        # print("\t{}: {},".format(key, machine.get(key)))
-
-
-def print_machine(name):
-    """
-    Print the current machine as a python dictionary, to make it possible
-    for the user to add it to this python script, in the block line 27 and below.
-    User needs to add it to the machines dictionary after that, to be able to call it
-    :param name: the name of the dictionary
-    """
-    print("### COPY THIS IN THE BLOCK LINE 27 ###")
-    print(name + " = {")
-    for key in machine.keys():
-        print("\t{}: {},".format(key, machine.get(key)))
-    print("}")
-    print("######################################")
 
 
 def init_band(integers, band):
@@ -151,59 +131,22 @@ def add_integers(list_integ):
         return ""
 
 
-def print_state(action):
-    """
-    Print the current band, index, state, action (for debugging purpose)
-    :param action: the last action (it's not a global)
-    """
-    print("Band : {}\nIndex : {}\nState : {}\nLast Action : {}".format(current_band, current_index, current_state,
-                                                                       action))
-
-
-def print_band(etat = None):
-    """
-    Print the current band, with green current index
-    """
-    my_str = "[" + str(iterator) + "] "
-    for i in range(0, len(current_band)):
-        if i == current_index:
-            my_str += bcolors.OKGREEN + current_band[i] + bcolors.ENDC  # don't forget ENDC !
-        else:
-            my_str += current_band[i]
-    if etat is not None:
-        my_str += " -- "+str(etat)
-    if display_inline:
-        print("\r{}   ".format(my_str), end="", flush=True)
-    else:
-        print(my_str)
-    time.sleep(display_sleep)
-
-
 def ending(i=0):
     """
     Print the ending infos and exits
     :param i: set to 1 if it was called in the transition exception screen
     """
     print("-----------------\nEnd Reached")
-    for elem in end_symbols :
-        try :
-            print("Number of "+elem+" : "+current_band.count(elem))
+    for elem in end_symbols:
+        try:
+            print("Number of " + elem + " : " + current_band.count(elem))
         except Exception as e:
             print("Number of " + elem + " : 0")
     print("Reached in {} steps".format(iterator))
     if i != 0:
         print("Note : Ended because of unknown transition")
-    else :
+    else:
         print(bcolors.OKRED + "Note : Ended because of infinite state" + bcolors.ENDC)
-    sys.exit(1)
-
-
-def error(string):
-    """
-    Print a red string
-    :param string: the string to print
-    """
-    print(bcolors.FAIL + string + bcolors.ENDC)
     sys.exit(1)
 
 
@@ -233,7 +176,7 @@ def next_state():
     elif machine_step[1] == 'L':  # move left
         current_index -= 1
         if current_index == 0:
-            current_band = "B"+current_band
+            current_band = "B" + current_band
     else:  # replace by character instead of moving
         if current_state == machine_step[2] and machine_step[0] == machine_step[1]:
             ending()
@@ -243,32 +186,54 @@ def next_state():
     current_state = machine_step[2]  # update current state
     global iterator
     iterator += 1
-    print_band(current_state)
+    print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
 
 
 # Parse arguments
 parser = argparse.ArgumentParser()
 
+# Working
 parser.add_argument('-b', '--band', help="Starting band for the program",
                     default="", type=str)
 parser.add_argument('-i', '--int', help="integers to add to the band", type=int, nargs='+')
 parser.add_argument('-s', '--start-index', help="Starting index of the machine", type=int, default=0)
 parser.add_argument('-p', '--print', help="Print a python version of the machine, to add it in the code, "
                                           "line 27 and below", type=str)
-parser.add_argument('-ph', '--print-human', help="Print the current machine as a human readable format", action='store_true')
+parser.add_argument('-ph', '--print-human', help="Print the current machine as a human readable format",
+                    action='store_true')
 parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
                                             " line 27 and below", type=str)
-parser.add_argument('-es', '--end-symbols', help="Specify the symbols to count after ending. Format : -es Y S",nargs='+',
+parser.add_argument('-es', '--end-symbols', help="Specify the symbols to count after ending. Format : -es Y S",
+                    nargs='+',
                     type=str, default="|")
-parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
-parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 
-parser.add_argument('-d', '--dictionary', help="Define the dictionary (format : A B C | D )", nargs='+')
 parser.add_argument('-di', '--display-inline', help="Display the current line inline", action='store_true')
 parser.add_argument('-ds', '--display-sleep', help="sleep n milliseconds between each step", default=0, type=int)
 parser.add_argument('-t', '--transitions', help="Transitions (format : '<start state> <read> <action> <end state>'\n"
                                                 "Example : \"0 B | 1\" \"0 | | 0\"", type=str, nargs='+')
+
+# Not Working
+parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
+parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
+parser.add_argument('-c', '--colors', help="Specify a color for a character ( -c B red ). l to list colors",
+                    type=str, nargs='+')
+
 args = parser.parse_args()
+
+if args.colors:
+    if args.colors[0] == "l":
+        available_colors()
+        sys.exit(1)
+    elif args.colors:
+        for char, color in grouped(args.colors, 2):
+            try:
+                special_color_char[char] = color_dict[color]
+            except Exception:
+                print(
+                    "Exception caught during color creating. \nAre you sure that {} and {} are valid ?".format(char, color))
+                available_colors()
+                sys.exit(1)
+        printers.special_char = special_color_char
 
 # Initialize
 if not args.machine and not args.transitions:
@@ -291,21 +256,22 @@ else:
 if args.start_index != 0:
     current_index = args.startindex
 if args.print:
-    print_machine(args.print)
+    print_machine(args.print, machine)
 if args.print_human:
-    print_human()
+    print_human(machine)
     sys.exit(1)
 end_symbols += args.end_symbols
 display_inline = args.display_inline
-display_sleep = args.display_sleep/1000
+display_sleep = args.display_sleep / 1000
 
 print("--------------------------------------")
 print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAnything else is up to you.")
 print("Text in " + bcolors.OKGREEN + "green" + bcolors.ENDC + " is the current index.")
 print("--------------------------------------")
 print("Starting with : ")
-print_band()
+print_band(iterator, current_band, current_index, display_inline, display_sleep)
 print("Run ...")
+
 
 while True:
     next_state()
