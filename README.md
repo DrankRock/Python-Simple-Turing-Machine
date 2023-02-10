@@ -45,12 +45,12 @@ options:
 
 
 ```
-#### -b, --band
+#### -b, --band `"custom band"`
 Specify a custom band.   
 `python SimpleTuring.py -m cleaner -b "BBB|||||This is a custom band"`  
 ![Screenshot from 2023-02-10 07-13-09](https://user-images.githubusercontent.com/32172257/218017046-89079986-14b0-493b-b0bb-6c45b2365ef0.png)
 
-#### -c, --colors
+#### -c, --colors `<character> <color> `
 Specify a custom color/effect/background for any character  
 `python SimpleTuring.py -c l`  
 ![image](https://user-images.githubusercontent.com/32172257/218018586-ae725f9b-15ce-4bf2-bd11-6cb5099b18b3.png)
@@ -62,62 +62,33 @@ Print every step on top of each other instead of the one after the other.
 `python SimpleTuring.py -m cleaner -i 1 2 -di`  
 ![image](https://user-images.githubusercontent.com/32172257/218019723-ca4291ab-993a-4acd-a24d-6393c10641c6.png)
 
-#### -ds, --display-sleep
+#### -ds, --display-sleep `<time in ms>`
 Set a delay in milliseconds between each step. Especially useful with `--display-inline`, to see the steps happen.  
 `python SimpleTuring.py -m cleaner -i 4 3 -di -ds 500`  
 ![display-sleep](https://user-images.githubusercontent.com/32172257/218020849-757a871c-9bd3-4beb-82ec-3300c0652a79.gif)
 
+#### -es, --end-symbols `<symbol1> .. <symbol n>`
+Set the symbols to count at the end of the execution  
+`python SimpleTuring.py -m cleaner -b "BBB|||Y||BB" -es Y \|`  
+![image](https://user-images.githubusercontent.com/32172257/218033188-293de8f7-106a-4677-9b2b-b4ce3d393cc7.png)
 
+#### -i, --int `<int1> <int2> .. <int n>`
+Set the band as a list of integers with the format n = `|^(n+1)B`  
+`python SimpleTuring.py -i 2 4 -m cleaner`  
+![image](https://user-images.githubusercontent.com/32172257/218033508-448fc77b-2f98-44ef-a8e3-b21c724299da.png)
 
-#### Example
-`python main.py -t "0 | B 1" "1 B R 0" -p cleaner -i 2 3`
-```
-### COPY THIS IN THE BLOCK LINE 27 ###
-cleaner = {
-        0: [['|', 'B', 1]],
-        1: [['B', 'R', 0]],
-}
-######################################
---------------------------------------
-Note : R is for Right, L is for left,
-B is for blank. | is for unary
-Anything else is up to you.
-Text in green is the current index.
---------------------------------------
-Starting with : 
-[0] BBB|||B||||BBBB
-Run ...
-[1] BBBB||B||||BBBB
-[2] BBBB||B||||BBBB
-[3] BBBBB|B||||BBBB
-[4] BBBBB|B||||BBBB
-[5] BBBBBBB||||BBBB
-[6] BBBBBBB||||BBBB
------------------
-End Reached
-Return value :  4
-Reached in 6 steps
-Note : Ended because of unknown transition
-```
--> Copy the top code in the block line 27 of the code   
--> run : `python main.py -m cleaner -i 2 3`
-```
-(...)
-Starting with : 
-[0] BBB|||B||||BBBB
-Run ...
-[1] BBBB||B||||BBBB
-[2] BBBB||B||||BBBB
-[3] BBBBB|B||||BBBB
-[4] BBBBB|B||||BBBB
-[5] BBBBBBB||||BBBB
-[6] BBBBBBB||||BBBB
------------------
-End Reached
-Return value :  4
-Reached in 6 steps
-Note : Ended because of unknown transition
-```
+#### -m, --machine `<machine name>
+Specify a saved machine to be executed. This machine needs to be saved to the code under the line 30. After creating your machine with the `-t` arguments, you can print as a python list with `-p` and add it to the code. More of this is explained under the **-p, --print** tab.
+`python SimpleTuring.py -i 2 -m cleaner`  
+
+#### -p, --print `<machine name>`
+Print the current machine as a list in python, to be copied in the dedicated space in the SimpleTuring.py code, as shown below. This makes it possible to use it by name with `-m, --machine` option.
+After executing with -p cleaner             |  SimpleTuring.py
+:-------------------------:|:-------------------------:
+![image](https://user-images.githubusercontent.com/32172257/218034221-7fbf4173-bfab-4a7e-9295-84662405d180.png)  |  ![image](https://user-images.githubusercontent.com/32172257/218034357-309ecf61-c78d-4662-b6d3-6b7f90f92a5d.png)
+
+#### -nb, --n-bands `<int>`
+** Not implemented yet, but aims to make it possible to use multiple bands **
 
 ### Contact
 If you encounter any kind of problem, or to have a chat, you can contact me on Discord @`MattV#7337`
