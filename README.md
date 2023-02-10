@@ -77,7 +77,7 @@ Set the band as a list of integers with the format n = `|^(n+1)B`
 `python SimpleTuring.py -i 2 4 -m cleaner`  
 ![image](https://user-images.githubusercontent.com/32172257/218033508-448fc77b-2f98-44ef-a8e3-b21c724299da.png)
 
-#### -m, --machine `<machine name>
+#### -m, --machine `<machine name>`
 Specify a saved machine to be executed. This machine needs to be saved to the code under the line 30. After creating your machine with the `-t` arguments, you can print as a python list with `-p` and add it to the code. More of this is explained under the **-p, --print** tab.
 `python SimpleTuring.py -i 2 -m cleaner`  
 
@@ -88,7 +88,22 @@ After executing with -p cleaner             |  SimpleTuring.py
 ![image](https://user-images.githubusercontent.com/32172257/218034221-7fbf4173-bfab-4a7e-9295-84662405d180.png)  |  ![image](https://user-images.githubusercontent.com/32172257/218034357-309ecf61-c78d-4662-b6d3-6b7f90f92a5d.png)
 
 #### -nb, --n-bands `<int>`
-** Not implemented yet, but aims to make it possible to use multiple bands **
+**Not implemented yet, but aims to make it possible to use multiple bands**
 
+### TODO
+      - gdb mode with s, j <n steps>, c, b <state>, p 
+    - n-bands /!\ Most important
+    - save machines to .machines file with -s
+        --> load 
+        --> append multiple machines
+        --> load machines from custom file 
+    - Complete http://morphett.info/turing/turing.html support
+        maybe -m <morphet file>
+    - Accept transitions from file
+        -t <filename>
+    - accept * as "do not move"
+    - .config to save parameters, maybe run -d to run default specified in config
+    
+  
 ### Contact
 If you encounter any kind of problem, or to have a chat, you can contact me on Discord @`MattV#7337`
