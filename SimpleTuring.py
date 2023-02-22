@@ -29,6 +29,7 @@ TODO : 1:easy, 2: easy but long, 3: hard, 4: impossible at the moment
 current_band = ""
 current_index = 0
 current_state = 0
+precedent=""
 iterator = 0
 end_symbols = []
 display_inline = False
@@ -145,7 +146,10 @@ def ending(i=0):
         except Exception as e:
             print("Number of " + elem + " : 0")
             print(e)
-    print("Reached in {} steps".format(iterator))
+    if i == 0:
+        print("Reached in ∞ steps")
+    else:
+        print("Reached in {} steps".format(iterator))
     if i != 0:
         print("Note : Ended because of unknown transition")
     else:
@@ -163,6 +167,7 @@ def next_state():
     global current_state
     global current_band
     global iterator
+    global precedent
 
     current_char = current_band[current_index]  # character pointed by index
     possibilities = machine.get(int(current_state))  # possible transitions
@@ -178,6 +183,7 @@ def next_state():
         ending(1)
     all_steps = machine_step[1:(nuplets-2)]
     all_steps.reverse()
+
     for step in all_steps :
         if step == 'R':  # move right
             current_index += 1
@@ -191,8 +197,6 @@ def next_state():
             do_nothing()
             # do nothing 
         else:  # replace by character instead of moving
-            if current_state == machine_step[2] and machine_step[0] == machine_step[1]:
-                ending()
             band = list(current_band)
             band[current_index] = step
             current_band = "".join(band)  # modify the band
@@ -200,6 +204,12 @@ def next_state():
     current_state = machine_step[nuplets-2]  # update current state
     if not nodisplay:
         print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
+
+    # Check if the machine is in an infinite state
+    current = str(current_state)+","+str(current_index)+","+str(current_char)
+    if current == precedent:
+        ending()
+    precedent = str(current_state)+","+str(current_index)+","+str(current_char)
 
 
 # Parse arguments
