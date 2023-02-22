@@ -7,14 +7,23 @@ from colors import *
 from printers import *
 
 '''
-TODO : 
-    - gdb mode with s, j <n steps>, c, b <state>, p 
-    - n-bands
-    - save machines to .machine file with -a
-        (saved machine can be of format :)
+TODO : 1:easy, 2: easy but long, 3: hard, 4: impossible at the moment
+ 2   - gdb mode with s, j <n steps>, c, b <state>, p 
+ 3   - n-bands /!\ Most important
+ 1   - -nd, --no-display to show only last band
+ 2   - save machines to .machines file with -s
         --> load 
         --> append multiple machines
-        --> load machines from custom file
+        --> load machines from custom file 
+ 2   - Complete http://morphett.info/turing/turing.html support
+        maybe -m <morphet file>
+ 1   - Accept transitions from file
+        -t <filename>
+ 1   - accept * as "do not move"
+ 2   - .config to save parameters, maybe run -d to run default specified in config
+    
+ 4   - Make a full blown GUI
+    Many of these imply a new file "file_manager.py"
 
 '''
 current_band = ""
@@ -26,6 +35,7 @@ display_inline = False
 display_sleep = 0
 special_color_char = {}
 nuplets = 4
+nodisplay = False
 
 #################################
 # ADD YOUR CUSTOM MACHINES HERE #
@@ -34,43 +44,26 @@ cleaner = {
     1: [['B', 'R', 0]]
 }
 
-cleaner5 = {
-    0: [['|', 'R', 'B', 0]]
-}
 
-startAndEnd = {
-    0: [['|', 'L', 1]],
-    1: [['B', 'S', 1], ['S', 'R', 2]],
-    2: [['|', 'R', 2], ['B', 'R', 3]],
-    3: [['|', 'R', 2], ['B', 'E', 4]],
-    4: [['E', 'L', 5]],
-    5: [['B', 'L', 5], ['|', 'L', 5], ['S', 'S', 6]],
+### COPY THIS IN THE BLOCK LINE 27 ###
+divide3 = {
+    0: [['|', 'R', 'B', '1']],
+    1: [['|', 'R', 'B', '2'], ['B', 'N', 'B', '3']],
+    2: [['|', 'N', 'R', '2'], ['B', 'N', '|', '3']],
+    3: [['|', 'N', 'L', '3'], ['B', 'R', 'R', '4']],
+    4: [['B', 'L', 'B', '8'], ['|', 'R', 'B', '5']],
+    5: [['B', 'R', 'B', '7'], ['|', 'R', 'B', '6']],
+    6: [['|', 'R', '|', '4'], ['B', 'R', 'B', '7']],
+    7: [['B', 'N', 'B', '7']],
+    8: [['|', 'N', 'B', '8']],
 }
-
-maximum = {
-    0: [['|', 'L', 1]],
-    1: [['B', 'S', 1], ['S', 'R', 2]],
-    2: [['|', 'R', 2], ['B', 'R', 3]],
-    3: [['|', 'R', 2], ['B', 'E', 4]],
-    4: [['E', 'L', 5]],
-    5: [['B', 'L', 5], ['|', 'L', 51], ['O', 'L', 5], ['S', 'R', 56]],
-    51: [['|', 'L', 51], ['O', 'L', 52], ['B', 'L', 52], ['S', 'S', 57]],
-    52: [['B', 'L', 52], ['O', 'L', 52], ['|', 'L', 53], ['S', 'S', 57]],
-    53: [['|', 'L', 53], ['O', 'L', 53], ['B', 'L', 53], ['S', 'R', 6]],
-    6: [['O', 'R', 6], ['|', 'O', 7], ['B', 'R', 6], ['E', 'E', 4]],
-    7: [['O', 'R', 7], ['|', 'R', 7], ['B', 'R', 6]],
-    57: [['S', 'R', 57], ['B', 'R', 57], ['O', 'R', 57], ['E', 'E', 57], ['|', 'L', 58]],
-    58: [['O', '|', 58], ['|', 'L', 58], ['B', 'B', 58], ['B', 'R', 59]],
-    59: [['|', 'B', 59], ['B', 'B', 59]],
-}
+######################################
 
 # Don't forget to add it below !
 machines = {
     "cleaner": cleaner,
-    "cleaner5": cleaner5,
-    "maximum": maximum
+    "divide": divide3
 }
-
 
 # ## END OF CUSTOM MACHINES  ## #
 #################################
@@ -159,6 +152,8 @@ def ending(i=0):
         print(bcolors.OKRED + "Note : Ended because of infinite state" + bcolors.ENDC)
     sys.exit(1)
 
+def do_nothing():
+    return 0
 
 def next_state():
     """
@@ -170,7 +165,7 @@ def next_state():
     global iterator
 
     current_char = current_band[current_index]  # character pointed by index
-    possibilities = machine.get(current_state)  # possible transitions
+    possibilities = machine.get(int(current_state))  # possible transitions
     machine_step = []
     try:
         for i in range(0, len(possibilities)):
@@ -181,7 +176,6 @@ def next_state():
         ending(1)
     if not machine_step:
         ending(1)
-
     all_steps = machine_step[1:(nuplets-2)]
     all_steps.reverse()
     for step in all_steps :
@@ -193,6 +187,9 @@ def next_state():
             current_index -= 1
             if current_index == 0:
                 current_band = "B" + current_band
+        elif step == 'N':  # do nothing
+            do_nothing()
+            # do nothing 
         else:  # replace by character instead of moving
             if current_state == machine_step[2] and machine_step[0] == machine_step[1]:
                 ending()
@@ -200,8 +197,9 @@ def next_state():
             band[current_index] = step
             current_band = "".join(band)  # modify the band
         iterator += 1
-        print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
     current_state = machine_step[nuplets-2]  # update current state
+    if not nodisplay:
+        print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
 
 
 # Parse arguments
@@ -210,39 +208,37 @@ parser = argparse.ArgumentParser()
 # Working
 parser.add_argument('-b', '--band', help="Starting band for the program",
                     default="", type=str)
+parser.add_argument('-c', '--colors', help="Specify a color for a character ( -c B red ). l to list colors",
+                    type=str, nargs='+')
+parser.add_argument('-di', '--display-inline', help="Display the current line inline", action='store_true')
+parser.add_argument('-ds', '--display-sleep', help="sleep n milliseconds between each step", default=0, type=int)
+parser.add_argument('-es', '--end-symbols', help="Specify the symbols to count after ending. Format : -es Y S",
+                    nargs='+',type=str, default="|")
 parser.add_argument('-i', '--int', help="integers to add to the band", type=int, nargs='+')
-parser.add_argument('-s', '--start-index', help="Starting index of the machine", type=int, default=0)
+parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
+                                            " line 27 and below", type=str)
+parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
+parser.add_argument('-nd', '--no-display', help="Show only the initial and ending band", action='store_true')
+parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
 parser.add_argument('-p', '--print', help="Print a python version of the machine, to add it in the code, "
                                           "line 27 and below", type=str)
 parser.add_argument('-ph', '--print-human', help="Print the current machine as a human readable format",
                     action='store_true')
-parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
-                                            " line 27 and below", type=str)
-parser.add_argument('-es', '--end-symbols', help="Specify the symbols to count after ending. Format : -es Y S",
-                    nargs='+',
-                    type=str, default="|")
-
-parser.add_argument('-di', '--display-inline', help="Display the current line inline", action='store_true')
-parser.add_argument('-ds', '--display-sleep', help="sleep n milliseconds between each step", default=0, type=int)
+parser.add_argument('-si', '--start-index', help="Starting index of the machine", type=int, default=0)
 parser.add_argument('-t', '--transitions', help="Transitions (format : '<start state> <read> <action> <end state>'\n"
                                                 "Example : \"0 B | 1\" \"0 | | 0\"", type=str, nargs='+')
-parser.add_argument('-c', '--colors', help="Specify a color for a character ( -c B red ). l to list colors",
-                    type=str, nargs='+')
-parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
-
 # Not Working
-parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 
 args = parser.parse_args()
 
 if args.colors:
-    if args.colors[0] == "l":
+    if args.colors[0] == "l" and len(args.colors) == 1:
         available_colors()
         sys.exit(1)
     elif args.colors:
         for char, color in grouped(args.colors, 2):
             try:
-                special_color_char[char] = color_dict[color]
+                special_color_char[char] = color_dict[color.lower()]
             except Exception:
                 print(
                     "Exception caught during color creating. \nAre you sure that {} and {} are valid ?".format(char, color))
@@ -274,15 +270,15 @@ else:
     make_machine(args.transitions)
 
 if args.start_index != 0:
-    current_index = args.startindex
-if args.print:
-    print_machine(args.print, machine)
-if args.print_human:
-    print_human(machine)
-    sys.exit(1)
+    current_index = args.start_index
+
+if args.print :
+    printers.print_machine(args.print[0], machine)
+
 end_symbols += args.end_symbols
 display_inline = args.display_inline
 display_sleep = args.display_sleep / 1000
+nodisplay = args.no_display
 
 print("--------------------------------------")
 print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAnything else is up to you.")
