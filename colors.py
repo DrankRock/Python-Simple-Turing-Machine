@@ -64,7 +64,7 @@ def available_colors():
     for colors in color_dict.keys():
         print(colors, end=", ")
         i += 1
-        if i == 6:
+        if i == 7:
             print("\n -- Background color :")
         elif i == 15:
             print("\n -- Debug color :")
