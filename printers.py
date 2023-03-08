@@ -1,4 +1,7 @@
-import time, sys
+import curses
+import sys
+import time
+
 from colors import *
 
 special_char = {}
@@ -11,7 +14,10 @@ def print_human(machine):
     sorted_dict = dict(sorted(machine.items()))
     for key in sorted_dict.keys():
         for elem in sorted_dict.get(key):
-            print("{}  {}  {}  {}".format(key, elem[0], elem[1], elem[2]))
+            strr = "" + str(key) + "  "
+            for car in elem:
+                strr += str(car) + "  "
+            print(strr)
 
 
 def print_machine(name, machine):
@@ -20,6 +26,7 @@ def print_machine(name, machine):
     for the user to add it to this python script, in the block line 27 and below.
     User needs to add it to the machines dictionary after that, to be able to call it
     :param name: the name of the dictionary
+    :param machine: the currently used machine
     """
     print("### COPY THIS IN THE BLOCK LINE 27 ###")
     print(name + " = {")
@@ -61,6 +68,16 @@ def print_band(iterator, current_band, current_index, display_inline, display_sl
     else:
         print(my_str)
     time.sleep(display_sleep)
+
+
+def multiline_printer(to_print):
+    # shenanigans
+    n_bars = 3
+    # turn off cursor blinking
+    curses.curs_set(0)
+    # set up colors
+    curses.start_color()
+    curses.use_default_colors()
 
 
 def error(string):
