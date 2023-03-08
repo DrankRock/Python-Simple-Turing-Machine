@@ -298,10 +298,8 @@ parser.add_argument('-i', '--int', help="integers to add to the band", type=int,
 parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
                                             " line 27 and below", type=str)
 parser.add_argument('-mi', '--maximum_iteration', help="Specify the maximum step (to detect divergence)", type=int)
-parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 parser.add_argument('-nd', '--no-display', help="Show only the initial and ending band", action='store_true')
 parser.add_argument('-nm', '--no-maximum', help="Remove the default maximum step value of 2^31-1", action='store_true')
-parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
 parser.add_argument('-p', '--print', help="Print a python version of the machine, to add it in the code, "
                                           "line 27 and below", type=str)
 parser.add_argument('-ph', '--print-human', help="Print the current machine as a human readable format",
@@ -328,11 +326,6 @@ if args.colors:
                 available_colors()
                 sys.exit(1)
         printers.special_char = special_color_char
-
-if int(args.n_uplet) < 4:
-    error("Error: N-Uplet can't be below 4")
-else:
-    nuplets = int(args.n_uplet)
 
 if args.maximum_iteration:
     maximum_iteration = int(args.maximum_iteration)
