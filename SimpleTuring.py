@@ -6,6 +6,8 @@ import printers
 from colors import *
 from printers import *
 from analysis import *
+import random
+import metrohash
 
 '''
 TODO : 1:easy, 2: easy but long, 3: hard, 4: impossible at the moment
@@ -41,6 +43,7 @@ nuplets = 4
 nodisplay = False
 maximum_iteration = 10000000
 check_maximum = True
+seed = random.randrange(0, sys.maxsize)
 
 encountered_bands_states = []
 
@@ -82,10 +85,12 @@ def grouped(iterable, n):  # https://stackoverflow.com/a/5389547
 def add_encountered_state(state):
     global encountered_bands_states
     new_state = str(current_band[0]) + str(current_state) + str(state) + str(current_index)
-    if new_state in encountered_bands_states:
+    hashed_name = metrohash.hash128_int(new_state, seed=seed)
+    setset = set(encountered_bands_states)
+    if hashed_name in setset: # sets are faster than list
         return False
     else:
-        encountered_bands_states.append(new_state)
+        encountered_bands_states.append(hashed_name)
         return True
 
 
