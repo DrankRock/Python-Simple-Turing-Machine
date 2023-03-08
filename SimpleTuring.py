@@ -5,6 +5,7 @@ import time
 import printers
 from colors import *
 from printers import *
+from analysis import *
 
 '''
 TODO : 1:easy, 2: easy but long, 3: hard, 4: impossible at the moment
@@ -38,7 +39,7 @@ display_sleep = 0
 special_color_char = {}
 nuplets = 4
 nodisplay = False
-maximum_iteration = sys.maxsize
+maximum_iteration = 10000000
 check_maximum = True
 
 encountered_bands_states = []
@@ -46,8 +47,8 @@ encountered_bands_states = []
 #################################
 # ADD YOUR CUSTOM MACHINES HERE #
 cleaner = {
-    0: [['|', 'B', 1]],
-    1: [['B', 'R', 0]]
+    '0': [['|', 'B', '1']],
+    '1': [['B', 'R', '0']]
 }
 
 ### COPY THIS IN THE BLOCK LINE 27 ###
@@ -139,7 +140,7 @@ def make_machine(transitions):
 
         for elem in transitions:
             current = elem.split(' ')
-            state = int(current[0])
+            state = str(current[0])
             if not my_dict.get(state):
                 my_dict[state] = []  # dictionary of the form : <start state>: [ [<read>, <action>, <end state>], [...]]
             elem_list = []
@@ -199,7 +200,7 @@ def ending(i=0):
     if i == 2 :
         print("Reached in ∞ steps")
         print(bcolors.OKRED + "Maximum step value reached. This machine seems to diverge.")
-        print("If no maximum value was set, the step 2,147,483,647 was reached.")
+        print("If no maximum value was set, the step 10,000,000 was reached.")
         print("To remove this maximum value, launch machine with '-nm, --no-maximum' parameter." + bcolors.ENDC)
         sys.exit(1)
     if nodisplay:
@@ -237,7 +238,7 @@ def next_state():
     global precedent
 
     current_char = current_band[0][current_index]  # character pointed by index
-    possibilities = machine.get(int(current_state))  # possible transitions
+    possibilities = machine.get(str(current_state))  # possible transitions
     machine_step = []
     try:
         for i in range(0, len(possibilities)):
@@ -330,6 +331,13 @@ if args.colors:
 if args.maximum_iteration:
     maximum_iteration = int(args.maximum_iteration)
 
+if args.no_maximum:
+    if args.maximum_iteration :
+        print(bcolors.OKRED,"'-nm, --no_maximum' was specified, but '-mi, --maximum_iteration' too. -nm is ignored.",
+              bcolors.ENDC)
+    else:
+        check_maximum = False
+
 
 # Initialize
 if not args.machine and not args.transitions:
@@ -362,6 +370,11 @@ end_symbols += args.end_symbols
 display_inline = args.display_inline
 display_sleep = args.display_sleep / 1000
 nodisplay = args.no_display
+
+if number_of_bands == 1:
+    analyse(machine, current_band)
+else :
+    print("Divergence Analysis is currently not possible on multiple bands machines.")
 
 print("--------------------------------------")
 print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAnything else is up to you.")
