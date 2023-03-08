@@ -26,10 +26,11 @@ TODO : 1:easy, 2: easy but long, 3: hard, 4: impossible at the moment
     Many of these imply a new file "file_manager.py"
 
 '''
-current_band = ""
+number_of_bands = 1
+current_band = []
 current_index = 0
 current_state = 0
-precedent=""
+precedent = ""
 iterator = 0
 end_symbols = []
 display_inline = False
@@ -37,6 +38,10 @@ display_sleep = 0
 special_color_char = {}
 nuplets = 4
 nodisplay = False
+maximum_iteration = sys.maxsize
+check_maximum = True
+
+encountered_bands_states = []
 
 #################################
 # ADD YOUR CUSTOM MACHINES HERE #
@@ -44,7 +49,6 @@ cleaner = {
     0: [['|', 'B', 1]],
     1: [['B', 'R', 0]]
 }
-
 
 ### COPY THIS IN THE BLOCK LINE 27 ###
 divide3 = {
@@ -66,11 +70,62 @@ machines = {
     "divide": divide3
 }
 
+
 # ## END OF CUSTOM MACHINES  ## #
 #################################
 
 def grouped(iterable, n):  # https://stackoverflow.com/a/5389547
     return zip(*[iter(iterable)] * n)
+
+
+def add_encountered_state(state):
+    global encountered_bands_states
+    new_state = str(current_band[0]) + str(current_state) + str(state) + str(current_index)
+    if new_state in encountered_bands_states:
+        return False
+    else:
+        encountered_bands_states.append(new_state)
+        return True
+
+
+def extract_parenthesis(transition):
+    # we have the chance that parenthesis should be next to each other
+    # you can note that i compare only two parenthesis. if there is more, nyëh
+    splitted_one = transition.split(") (")
+    splitted_one_one = splitted_one[0].split("(")[1]
+    splitted_one_two = splitted_one[1].split(")")[0]
+    if len(splitted_one_two) != len(splitted_one_one):
+        raise ValueError("All bands should be treated at oonce. Incorrect transition : \"{}\"".format(transition))
+    dummy_transition = ""
+    deepness = 0
+
+    for i in range(len(transition)):
+        current = transition[i]
+        if current == "(":
+            deepness += 1
+        elif current == ")":
+            deepness -= 1
+            dummy_transition += "D"
+        else :
+            if deepness == 0:
+                dummy_transition += current
+    print("dumm : ", dummy_transition)
+    return splitted_one_one, dummy_transition
+
+
+def init_dict(transition):
+    # initialisation phase on the first transition
+    init_split = transition.split(' ')
+    global number_of_bands
+    if "(" in transition:
+        content_of_one_parenthesis, dummy = extract_parenthesis(transition)
+        number_of_bands = len(content_of_one_parenthesis)
+        size_of_uplets = len(dummy.split(" "))
+    else :
+        size_of_uplets = len(transition[1:-1].split(" "))
+    global nuplets
+    nuplets = size_of_uplets
+
 
 
 def make_machine(transitions):
@@ -80,6 +135,8 @@ def make_machine(transitions):
     """
     try:
         my_dict = {}
+        init_dict(transitions[0])
+
         for elem in transitions:
             current = elem.split(' ')
             state = int(current[0])
@@ -102,12 +159,12 @@ def init_band(integers, band):
     :param band: a string containing a custom band
     """
     global current_band
-    current_band = band
-    current_band += "BBB"
+    current_band.append(band)
+    current_band[0] += "BBB"
     global current_index
     current_index += 3  # because I add BBB for clarity
-    current_band += add_integers(integers)
-    current_band += "BBB"
+    current_band[0] += add_integers(integers)
+    current_band[0] += "BBB"
 
 
 def add_integers(list_integ):
@@ -139,10 +196,18 @@ def ending(i=0):
     """
     if display_inline:
         print("")
+    if i == 2 :
+        print("Reached in ∞ steps")
+        print(bcolors.OKRED + "Maximum step value reached. This machine seems to diverge.")
+        print("If no maximum value was set, the step 2,147,483,647 was reached.")
+        print("To remove this maximum value, launch machine with '-nm, --no-maximum' parameter." + bcolors.ENDC)
+        sys.exit(1)
+    if nodisplay:
+        print_band(iterator, current_band[0], current_index, display_inline, display_sleep, current_state)
     print("-----------------\nEnd Reached")
     for elem in end_symbols:
         try:
-            print("Number of " + elem + " : " + str(current_band.count(elem)))
+            print("Number of " + elem + " : " + str(current_band[0].count(elem)))
         except Exception as e:
             print("Number of " + elem + " : 0")
             print(e)
@@ -156,8 +221,10 @@ def ending(i=0):
         print(bcolors.OKRED + "Note : Ended because of infinite state" + bcolors.ENDC)
     sys.exit(1)
 
+
 def do_nothing():
     return 0
+
 
 def next_state():
     """
@@ -169,7 +236,7 @@ def next_state():
     global iterator
     global precedent
 
-    current_char = current_band[current_index]  # character pointed by index
+    current_char = current_band[0][current_index]  # character pointed by index
     possibilities = machine.get(int(current_state))  # possible transitions
     machine_step = []
     try:
@@ -181,35 +248,38 @@ def next_state():
         ending(1)
     if not machine_step:
         ending(1)
-    all_steps = machine_step[1:(nuplets-2)]
+    all_steps = machine_step[1:(nuplets - 2)]
     all_steps.reverse()
 
-    for step in all_steps :
+    for step in all_steps:
+        if not add_encountered_state(step):
+            print("state already encountered")
+            ending()
         if step == 'R':  # move right
             current_index += 1
-            if current_index == len(current_band) - 1:
-                current_band += "B"
+            if current_index == len(current_band[0]) - 1:
+                current_band[0] += "B"
         elif step == 'L':  # move left
             current_index -= 1
             if current_index == 0:
-                current_band = "B" + current_band
+                current_band[0] = "B" + current_band[0]
         elif step == 'N':  # do nothing
             do_nothing()
             # do nothing 
         else:  # replace by character instead of moving
-            band = list(current_band)
+            band = list(current_band[0])
             band[current_index] = step
-            current_band = "".join(band)  # modify the band
+            current_band[0] = "".join(band)  # modify the band
         iterator += 1
-    current_state = machine_step[nuplets-2]  # update current state
-    if not nodisplay:
-        print_band(iterator, current_band, current_index, display_inline, display_sleep, current_state)
+        if not nodisplay:
+            print_band(iterator, current_band[0], current_index, display_inline, display_sleep, current_state)
+    current_state = machine_step[nuplets - 2]  # update current state
 
     # Check if the machine is in an infinite state
-    current = str(current_state)+","+str(current_index)+","+str(current_char)
+    current = str(current_state) + "," + str(current_index) + "," + str(current_char)
     if current == precedent:
         ending()
-    precedent = str(current_state)+","+str(current_index)+","+str(current_char)
+    precedent = str(current_state) + "," + str(current_index) + "," + str(current_char)
 
 
 # Parse arguments
@@ -223,12 +293,14 @@ parser.add_argument('-c', '--colors', help="Specify a color for a character ( -c
 parser.add_argument('-di', '--display-inline', help="Display the current line inline", action='store_true')
 parser.add_argument('-ds', '--display-sleep', help="sleep n milliseconds between each step", default=0, type=int)
 parser.add_argument('-es', '--end-symbols', help="Specify the symbols to count after ending. Format : -es Y S",
-                    nargs='+',type=str, default="|")
+                    nargs='+', type=str, default="|")
 parser.add_argument('-i', '--int', help="integers to add to the band", type=int, nargs='+')
 parser.add_argument('-m', '--machine', help="Use a custom machine previously added to the source code above,"
                                             " line 27 and below", type=str)
+parser.add_argument('-mi', '--maximum_iteration', help="Specify the maximum step (to detect divergence)", type=int)
 parser.add_argument('-nb', '--n-bands', help="Specify the number of bands (default : 1, min : 1)", type=int, default=1)
 parser.add_argument('-nd', '--no-display', help="Show only the initial and ending band", action='store_true')
+parser.add_argument('-nm', '--no-maximum', help="Remove the default maximum step value of 2^31-1", action='store_true')
 parser.add_argument('-nu', '--n-uplet', help="Specify the accepted n-uplet (default : 4, min : 4)", type=int, default=4)
 parser.add_argument('-p', '--print', help="Print a python version of the machine, to add it in the code, "
                                           "line 27 and below", type=str)
@@ -251,15 +323,20 @@ if args.colors:
                 special_color_char[char] = color_dict[color.lower()]
             except Exception:
                 print(
-                    "Exception caught during color creating. \nAre you sure that {} and {} are valid ?".format(char, color))
+                    "Exception caught during color creating. \nAre you sure that {} and {} are valid ?".format(char,
+                                                                                                               color))
                 available_colors()
                 sys.exit(1)
         printers.special_char = special_color_char
 
 if int(args.n_uplet) < 4:
     error("Error: N-Uplet can't be below 4")
-else :
-    nuplets = args.n_uplet
+else:
+    nuplets = int(args.n_uplet)
+
+if args.maximum_iteration:
+    maximum_iteration = int(args.maximum_iteration)
+
 
 # Initialize
 if not args.machine and not args.transitions:
@@ -282,8 +359,11 @@ else:
 if args.start_index != 0:
     current_index = args.start_index
 
-if args.print :
+if args.print:
     printers.print_machine(args.print[0], machine)
+
+if args.print_human:
+    printers.print_human(machine)
 
 end_symbols += args.end_symbols
 display_inline = args.display_inline
@@ -295,9 +375,12 @@ print("Note : R is for Right, L is for left,\nB is for blank. | is for unary\nAn
 print("Text in " + bcolors.OKGREEN + "green" + bcolors.ENDC + " is the current index.")
 print("--------------------------------------")
 print("Starting with : ")
-print_band(iterator, current_band, current_index, display_inline, display_sleep)
+print_band(iterator, current_band[0], current_index, display_inline, display_sleep)
 print("Run ...")
 
-
 while True:
-    next_state()
+    if not check_maximum or maximum_iteration > 0 and check_maximum:
+        next_state()
+    else:
+        ending(2)
+    maximum_iteration -= 1
